@@ -9,4 +9,3 @@ function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 }
 
 export { ThemeProvider };
-
