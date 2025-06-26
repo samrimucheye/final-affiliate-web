@@ -8,6 +8,7 @@ export interface IAffiliateLink extends Document {
   userId?: string; // Optional if needed
   createdAt: Date;
   updatedAt: Date;
+  _id: string; // Mongoose adds this by default
 }
 
 const AffiliateLinkSchema: Schema = new Schema(

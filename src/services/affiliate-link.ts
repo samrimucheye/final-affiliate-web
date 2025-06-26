@@ -27,5 +27,5 @@ export interface AffiliateLink {
   userId: string;
   createdAt: string; // ISO string format
 
-  updatedAt: string; // ISO string format
+  updatedAt: string; // ISO string format userId, createdAt, updatedAt
 }

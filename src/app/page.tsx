@@ -5,19 +5,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import LinkManagement from "@/components/LinkManagement";
 import AiDescription from "@/components/AiDescription";
-import type { AffiliateLink } from "@/services/affiliate-link";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
-import { AffiliateLinkDisplayProps } from "@/components/AffiliateLinkDisplay";
-// import AffiliateLinkDisplay from "@/components/AffiliateLinkDisplay";
-const AffiliateLinkDisplay = (props: AffiliateLinkDisplayProps) => {
-  // Implement or re-export the correct component here, or ensure the import is correct.
-  // This is a placeholder. Replace with the actual implementation or correct import.
-  return null;
-};
+import AffiliateLinkDisplay from "@/components/AffiliateLinkDisplay";
+import { AffiliateLink } from "@/services/affiliate-link";
+// Implement or re-export the correct component here, or ensure the import is correct.
+// This is a placeholder. Replace with the actual implementation or correct import.
 
 // Default affiliate links data matching AffiliateLink[] type
 const defaultLinksData: AffiliateLink[] = [
@@ -303,6 +299,11 @@ export default function Home() {
         <h1 className="text-3xl font-bold tracking-tight mb-4 sm:mb-0">
           Your Affiliate Links
         </h1>
+        <p>
+          {user
+            ? ` Welcome, ${user.name || user.email}!`
+            : " Please log in to add your links."}
+        </p>
         {user && (
           <Button onClick={toggleLinkManagementForm} size="lg">
             <PlusCircle className="mr-2 h-5 w-5" />
@@ -328,15 +329,27 @@ export default function Home() {
           ))}
         </div>
       )}
-
+      {
+        // md:grid-cols-2 lg:grid-cols-3
+      }
       {!linksLoading && !linksError && (
-        <AffiliateLinkDisplay
-          links={links.length > 0 ? links : defaultLinksData}
-          isAdmin={isAdmin}
-          currentUserId={user?.email || null}
-          onDelete={handleDeleteLink}
-          onEdit={handleEditLink}
-        />
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {links.length === 0 ? (
+            <div className="col-span-full text-center text-gray-500">
+              No affiliate links found. Add your first link!
+            </div>
+          ) : (
+            links.map((link, idx) => (
+              <AffiliateLinkDisplay
+                key={idx}
+                link={link}
+                onDelete={handleDeleteLink}
+                onEdit={handleEditLink}
+                isAdmin={isAdmin}
+              />
+            ))
+          )}
+        </div>
       )}
 
       <div id="link-management-section" className="mt-8">

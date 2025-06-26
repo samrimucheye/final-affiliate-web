@@ -26,9 +26,12 @@ import { ModeToggle } from "@/components/ModeToggle";
 import { Button } from "@/components/ui/button";
 import AccessibilityOptionsDialog from "@/components/AccessibilityOptionsDialog";
 import { Separator } from "@/components/ui/separator";
-
+import { useSession } from "next-auth/react";
+import SignOut from "./SignOut";
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { data: session } = useSession();
+  const user = session?.user ?? null;
 
   const handleMenuClose = () => {
     setIsMenuOpen(false);
@@ -57,10 +60,11 @@ const Navbar = () => {
       icon: <BookOpen className="mr-2 h-4 w-4" />,
     },
     {
-      href: "/login",
-      label: "Login",
-      icon: <LogIn className="mr-2 h-4 w-4" />, // Added login icon
+      href: "/admin/products",
+      label: "Admin Products",
+      icon: <ShoppingBag className="mr-2 h-4 w-4" />,
     },
+
     {
       href: "/signup",
       label: "Sign Up",
@@ -92,35 +96,57 @@ const Navbar = () => {
                 <SheetDescription>Explore AffiliateLink Hub</SheetDescription>
               </SheetHeader>
               <div className="flex flex-col p-4 space-y-1">
-                {navLinks.map((link) => (
-                  <Link key={link.href} href={link.href} passHref>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-base"
-                      onClick={handleMenuClose}
-                    >
-                      {link.icon}
-                      {link.label}
-                    </Button>
-                  </Link>
-                ))}
-                <Separator className="my-3" />
-                <div className="flex items-center justify-between px-2 pt-2">
-                  <p className="text-sm text-muted-foreground">Theme</p>
-                  <ModeToggle />
-                </div>
-                <div className="flex items-center justify-between px-2 pt-2">
-                  <p className="text-sm text-muted-foreground">Accessibility</p>
-                  <AccessibilityOptionsDialog onDialogClose={handleMenuClose}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Accessibility Options"
-                    >
-                      <Accessibility className="h-5 w-5" />
-                    </Button>
-                  </AccessibilityOptionsDialog>
-                </div>
+                {navLinks
+                  .filter((link) => {
+                    if (link.href === "/admin/products") {
+                      return user && user.role === "admin";
+                    }
+                    return true;
+                  })
+                  .map((link) => (
+                    <Link key={link.href} href={link.href} passHref>
+                      <Button
+                        key={link.href + link.label}
+                        variant="ghost"
+                        className="w-full justify-start text-base"
+                        onClick={handleMenuClose}
+                      >
+                        {link.icon}
+                        {link.label}
+                      </Button>
+                    </Link>
+                  ))}
+              </div>
+              <Separator className="my-3" />
+              {user ? (
+                <SignOut />
+              ) : (
+                <Link href="/login" passHref>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-base"
+                    onClick={handleMenuClose}
+                  >
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Login
+                  </Button>
+                </Link>
+              )}
+              <div className="flex items-center justify-between px-2 pt-2">
+                <p className="text-sm text-muted-foreground">Theme</p>
+                <ModeToggle />
+              </div>
+              <div className="flex items-center justify-between px-2 pt-2">
+                <p className="text-sm text-muted-foreground">Accessibility</p>
+                <AccessibilityOptionsDialog onDialogClose={handleMenuClose}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Accessibility Options"
+                  >
+                    <Accessibility className="h-5 w-5" />
+                  </Button>
+                </AccessibilityOptionsDialog>
               </div>
               <SheetClose asChild>
                 <Button
@@ -128,7 +154,7 @@ const Navbar = () => {
                   className="absolute top-3 right-3 h-8 w-8 p-0"
                   aria-label="Close menu"
                 >
-                  <Menu className="h-5 w-5" />
+                  {/* <Menu className="h-5 w-5" /> */}
                 </Button>
               </SheetClose>
             </SheetContent>
@@ -136,17 +162,39 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center space-x-2">
-          {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} passHref>
+          {navLinks
+            .filter((link) => {
+              if (link.href === "/admin/products") {
+                return user && user.role === "admin";
+              }
+              return true;
+            })
+            .map((link) => (
+              <Link key={link.href} href={link.href} passHref>
+                <Button
+                  key={link.href + link.label}
+                  variant="ghost"
+                  className="w-full justify-start text-base"
+                  onClick={handleMenuClose}
+                >
+                  {link.label}
+                </Button>
+              </Link>
+            ))}
+          {user ? (
+            <SignOut />
+          ) : (
+            <Link href="/login" passHref>
               <Button
                 variant="ghost"
-                className="text-sm font-medium hover:text-primary"
+                className="w-full justify-start text-base"
+                onClick={handleMenuClose}
               >
-                {link.label}
+                <LogIn className="mr-2 h-4 w-4" />
+                Login
               </Button>
             </Link>
-          ))}
-          <Separator orientation="vertical" className="h-6 mx-2" />
+          )}
           <ModeToggle />
           <AccessibilityOptionsDialog>
             <Button
