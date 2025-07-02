@@ -21,6 +21,9 @@ const defaultLinks: AffiliateLink[] = [
     userId: "system",
     createdAt: new Date("2024-01-01T10:00:00Z").toISOString(),
     updatedAt: new Date("2024-01-01T10:00:00Z").toISOString(),
+    link: "",
+    onEdit: () => {},
+    onDelete: () => {},
   },
   {
     id: "default-link-2",
@@ -34,6 +37,9 @@ const defaultLinks: AffiliateLink[] = [
     userId: "system",
     createdAt: new Date("2024-01-02T11:00:00Z").toISOString(),
     updatedAt: new Date("2024-01-02T11:00:00Z").toISOString(),
+    link: "",
+    onEdit: () => {},
+    onDelete: () => {},
   },
   {
     id: "default-link-3",
@@ -47,6 +53,9 @@ const defaultLinks: AffiliateLink[] = [
     userId: "system",
     createdAt: new Date("2024-01-03T12:00:00Z").toISOString(),
     updatedAt: new Date("2024-01-03T12:00:00Z").toISOString(),
+    link: "",
+    onEdit: () => {},
+    onDelete: () => {},
   },
 ];
 

@@ -20,7 +20,7 @@ export default async function AdminProductsPage() {
   }
 
   await connectToDB();
-  let products = [];
+  let products: any[] = [];
   try {
     products = await AffiliateLink.find();
   } catch (error) {
@@ -33,14 +33,6 @@ export default async function AdminProductsPage() {
         <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-500 tracking-tight">
           Admin Product Dashboard
         </h1>
-        {/* <form action="/api/auth/signout" method="POST">
-          <button
-            type="submit"
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-          >
-            Logout
-          </button>
-        </form> */}
       </header>
       <main className="max-w-4xl mx-auto mt-12 bg-white p-10 rounded-3xl shadow-2xl">
         <ul className="space-y-6">

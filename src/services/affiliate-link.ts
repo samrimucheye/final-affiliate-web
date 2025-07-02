@@ -26,6 +26,10 @@ export interface AffiliateLink {
   affiliateUrl: string;
   userId: string;
   createdAt: string; // ISO string format
-
+  link: string; // The actual affiliate link URL
+  onEdit: (link: AffiliateLink) => void; // Function to handle editing the link,
+  onDelete: (link: AffiliateLink) => void; // Function to handle deleting the link,
   updatedAt: string; // ISO string format userId, createdAt, updatedAt
+  isAdmin?: boolean; // Optional flag to indicate if the user is an admin
+  url?: string;
 }

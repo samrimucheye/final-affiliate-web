@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -26,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { Loader2, Save, Ban } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { Button } from "./ui/button";
 
 interface LinkManagementProps {
   onLinkAddedOrUpdated: (

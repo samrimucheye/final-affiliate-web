@@ -16,6 +16,20 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      // Added pattern for Unsplash images
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        port: "",
+        pathname: "/**",
+      },
+      // media from "istockphoto.com",
+      {
+        protocol: "https",
+        hostname: "media.istockphoto.com",
+        port: "",
+        pathname: "/**",
+      },
       {
         protocol: "https",
         hostname: "www.amazon.com", // Added Amazon hostname
@@ -46,6 +60,8 @@ const nextConfig: NextConfig = {
         // Added pattern for placeholder images
         protocol: "https",
         hostname: "m.media-amazon.com",
+        port: "",
+        pathname: "/**",
       },
     ],
   },

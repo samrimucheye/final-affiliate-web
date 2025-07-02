@@ -50,3 +50,28 @@ export async function DELETE(
     );
   }
 }
+
+//GET request to fetch a single affiliate link by ID
+
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectToDB();
+    const { id } = await params;
+    const link = await AffiliateLink.findById(id);
+
+    if (!link) {
+      return NextResponse.json({ error: "Link not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(link);
+  } catch (error) {
+    console.error("Error fetching link:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch link" },
+      { status: 500 }
+    );
+  }
+}

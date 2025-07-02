@@ -1,281 +1,147 @@
 "use client";
 
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-import LinkManagement from "@/components/LinkManagement";
-import AiDescription from "@/components/AiDescription";
-import { toast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { PlusCircle, AlertTriangle } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useSession } from "next-auth/react";
-import AffiliateLinkDisplay from "@/components/AffiliateLinkDisplay";
 import { AffiliateLink } from "@/services/affiliate-link";
-// Implement or re-export the correct component here, or ensure the import is correct.
-// This is a placeholder. Replace with the actual implementation or correct import.
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
+import {
+  PlusCircle,
+  AlertTriangle,
+  ExternalLink,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+// import LinkManagement from "@/components/LinkManagement";
+import AiDescription from "@/components/AiDescription";
+import LinkManagement from "@/components/LinkManagement";
 
-// Default affiliate links data matching AffiliateLink[] type
-const defaultLinksData: AffiliateLink[] = [
-  {
-    id: "default-link-1",
-    productName: "High-Performance Laptop",
-    description:
-      "Boost your productivity with this top-tier laptop, perfect for work and play. Features the latest processor and a stunning display.",
-    imageUrl: "https://placehold.co/300x200.png",
-    aiHint: "laptop computer",
-    affiliateUrl:
-      "https://www.amazon.com/s?k=high+performance+laptop&_encoding=UTF8&tag=yourtag-20",
-    userId: "system",
-    createdAt: new Date("2024-01-01T10:00:00Z").toISOString(),
-    updatedAt: new Date("2024-01-01T10:00:00Z").toISOString(),
-  },
-  {
-    id: "default-link-2",
-    productName: "Wireless Noise-Cancelling Headphones",
-    description:
-      "Immerse yourself in sound with these comfortable, high-fidelity headphones. Long battery life and crystal-clear audio.",
-    imageUrl: "https://placehold.co/300x200.png",
-    aiHint: "headphones audio",
-    affiliateUrl:
-      "https://www.amazon.com/s?k=wireless+noise+cancelling+headphones&_encoding=UTF8&tag=yourtag-20",
-    userId: "system",
-    createdAt: new Date("2024-01-02T11:00:00Z").toISOString(),
-    updatedAt: new Date("2024-01-02T11:00:00Z").toISOString(),
-  },
-  {
-    id: "default-link-3",
-    productName: "Ergonomic Office Chair",
-    description:
-      "Support your back and improve posture with this adjustable ergonomic chair. Ideal for long hours of work or gaming.",
-    imageUrl: "https://placehold.co/300x200.png",
-    aiHint: "office chair furniture",
-    affiliateUrl:
-      "https://www.amazon.com/s?k=ergonomic+office+chair&_encoding=UTF8&tag=yourtag-20",
-    userId: "system",
-    createdAt: new Date("2024-01-03T12:00:00Z").toISOString(),
-    updatedAt: new Date("2024-01-03T12:00:00Z").toISOString(),
-  },
-];
-
-// API helpers to call backend routes you implement to connect to MongoDB
-async function getAffiliateLinks(): Promise<AffiliateLink[]> {
-  const res = await fetch("/api/affiliate-links");
-  if (!res.ok) throw new Error("Failed to fetch affiliate links");
-  return res.json();
-}
-
-async function addAffiliateLink(
-  linkData: Omit<AffiliateLink, "id" | "createdAt" | "updatedAt">
-) {
-  const res = await fetch("/api/affiliate-links", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(linkData),
-  });
-  if (!res.ok) throw new Error("Failed to add affiliate link");
-  return res.json();
-}
-
-async function updateAffiliateLink(id: string, linkData: AffiliateLink) {
-  const res = await fetch(`/api/affiliate-links/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(linkData),
-  });
-  if (!res.ok) throw new Error("Failed to update affiliate link");
-  return res.json();
-}
-
-async function deleteAffiliateLink(id: string) {
-  const res = await fetch(`/api/affiliate-links/${id}`, {
-    method: "DELETE",
-  });
-  if (!res.ok) throw new Error("Failed to delete affiliate link");
-  // Use the AffiliateLink type from the service import above
-}
+type ApiResponse = {
+  data: AffiliateLink[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
 
 export default function Home() {
   const { data: session, status } = useSession();
   const user = session?.user ?? null;
-  const isAdmin = user?.email === "admin@example.com"; // Adjust admin logic as needed
+  const isAdmin = user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   const [showLinkManagement, setShowLinkManagement] = useState(false);
   const [editingLink, setEditingLink] = useState<AffiliateLink | null>(null);
 
-  const queryClient = useQueryClient();
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
 
+  // Fetch affiliate links from API with pagination
   const {
-    data: links = [],
+    data: apiData,
     isLoading: linksLoading,
     error: linksError,
-  } = useQuery<AffiliateLink[], Error>({
-    queryKey: ["affiliateLinks"],
-    queryFn: getAffiliateLinks,
-    enabled: true,
-    initialData: defaultLinksData,
+    refetch,
+  } = useQuery<ApiResponse, Error>({
+    queryKey: ["affiliateLinks", page, pageSize],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/affiliate-links?page=${page}&limit=${pageSize}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch links");
+      return res.json();
+    },
+    // keepPreviousData: true, // Removed because not supported in current react-query version
   });
+
+  const links = apiData?.data ?? [];
+  const totalPages = apiData?.totalPages ?? 1;
 
   const loading = status === "loading" || linksLoading;
 
-  // Add new link mutation
-  const addLinkMutation = useMutation({
-    mutationFn: (
-      linkData: Omit<AffiliateLink, "id" | "createdAt" | "updatedAt">
-    ) => {
-      if (!user) throw new Error("User not authenticated");
-      return addAffiliateLink({ ...linkData, userId: user.email || "" });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["affiliateLinks"] });
-      toast({
-        title: "Link Added!",
-        description: "Your new affiliate link has been saved.",
-      });
-      setShowLinkManagement(false);
-      setEditingLink(null);
-    },
-    onError: (error: Error) => {
-      console.error("Error adding link on client:", error);
-      toast({
-        title: "Error Adding Link",
-        description: error.message || "Could not add the link.",
-        variant: "destructive",
-      });
-    },
-  });
+  const toggleLinkManagementForm = () => setShowLinkManagement((prev) => !prev);
 
-  // Update link mutation
-  const updateLinkMutation = useMutation({
-    mutationFn: (linkData: AffiliateLink) => {
-      if (!user || (!isAdmin && user.email !== linkData.userId)) {
-        throw new Error(
-          "Unauthorized: You do not have permission to update this link."
-        );
-      }
-      return updateAffiliateLink(linkData.id, linkData);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["affiliateLinks"] });
-      toast({
-        title: "Link Updated!",
-        description: "The affiliate link has been successfully updated.",
-      });
-      setShowLinkManagement(false);
-      setEditingLink(null);
-    },
-    onError: (error: Error) => {
-      console.error("Error updating link on client:", error);
-      toast({
-        title: "Error Updating Link",
-        description: error.message || "Could not update the link.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Delete link mutation
-  const deleteLinkMutation = useMutation({
-    mutationFn: (linkId: string) => {
-      if (!user || !isAdmin) {
-        throw new Error(
-          "Unauthorized: You do not have permission to delete links."
-        );
-      }
-      return deleteAffiliateLink(linkId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["affiliateLinks"] });
-      toast({
-        title: "Link Deleted!",
-        description: "The affiliate link has been removed.",
-      });
-    },
-    onError: (error: Error) => {
-      console.error("Error deleting link on client:", error);
-      toast({
-        title: "Error Deleting Link",
-        description: error.message || "Could not delete the link.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleAddOrUpdateLink = (
-    linkData:
-      | Omit<AffiliateLink, "id" | "createdAt" | "updatedAt">
-      | AffiliateLink
-  ) => {
-    if ("id" in linkData && linkData.id) {
-      if (user && (isAdmin || user.email === linkData.userId)) {
-        updateLinkMutation.mutate(linkData as AffiliateLink);
-      } else {
-        toast({
-          title: "Permission Denied",
-          description: "You cannot edit this link.",
-          variant: "destructive",
-        });
-      }
-    } else {
-      if (user) {
-        addLinkMutation.mutate(
-          linkData as Omit<AffiliateLink, "id" | "createdAt" | "updatedAt">
-        );
-      } else {
-        toast({
-          title: "Not Logged In",
-          description: "Please log in to add a link.",
-          variant: "destructive",
-        });
-      }
-    }
+  const handleEditLink = (link: AffiliateLink) => {
+    setEditingLink(link);
+    setShowLinkManagement(true);
   };
 
   const handleDeleteLink = (id: string) => {
-    if (user && isAdmin) {
-      deleteLinkMutation.mutate(id);
-    } else {
-      toast({
-        title: "Permission Denied",
-        description: "Only admins can delete links.",
-        variant: "destructive",
+    // Implement delete logic here
+    fetch(`/api/affiliate-links/${id}`, {
+      method: "DELETE",
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to delete link");
+        refetch();
+      })
+      .catch((err) => {
+        alert(`Error deleting link: ${err.message}`);
       });
-    }
+    alert(`Delete link with id: ${id}`);
   };
 
-  const handleEditLink = (link: AffiliateLink) => {
-    if (user && (isAdmin || user.email === link.userId)) {
-      setEditingLink(link);
-      setShowLinkManagement(true);
-    } else {
-      toast({
-        title: "Permission Denied",
-        description: "You cannot edit this link.",
-        variant: "destructive",
+  const handleAddOrUpdateLink = async (linkData: Partial<AffiliateLink>) => {
+    try {
+      // If editing, send PUT; otherwise, POST
+      const method = editingLink ? "PUT" : "POST";
+      const url = editingLink
+        ? `/api/affiliate-links/${editingLink.id}`
+        : "/api/affiliate-links";
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(linkData),
       });
+      if (!res.ok) throw new Error("Failed to save link");
+      setShowLinkManagement(false);
+      setEditingLink(null);
+      refetch();
+    } catch (err: any) {
+      alert(`Error saving link: ${err.message}`);
     }
   };
 
   const handleCancelEdit = () => {
-    setEditingLink(null);
     setShowLinkManagement(false);
+    setEditingLink(null);
   };
 
-  const toggleLinkManagementForm = () => {
-    if (showLinkManagement) {
-      handleCancelEdit();
-    } else {
-      if (user) {
-        setShowLinkManagement(true);
-      } else {
-        toast({
-          title: "Login Required",
-          description: "Please log in to add a new link.",
-          variant: "default",
-        });
-      }
-    }
-  };
+  // Pagination controls
+  const Pagination = () => (
+    <div className="flex justify-center items-center gap-2 mt-6">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setPage((p) => Math.max(1, p - 1))}
+        disabled={page === 1}
+      >
+        Previous
+      </Button>
+      <span className="px-2 text-sm">
+        Page {page} of {totalPages}
+      </span>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+        disabled={page === totalPages}
+      >
+        Next
+      </Button>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -329,27 +195,104 @@ export default function Home() {
           ))}
         </div>
       )}
-      {
-        // md:grid-cols-2 lg:grid-cols-3
-      }
+
       {!linksLoading && !linksError && (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {links.length === 0 ? (
-            <div className="col-span-full text-center text-gray-500">
-              No affiliate links found. Add your first link!
-            </div>
-          ) : (
-            links.map((link, idx) => (
-              <AffiliateLinkDisplay
-                key={idx}
-                link={link}
-                onDelete={handleDeleteLink}
-                onEdit={handleEditLink}
-                isAdmin={isAdmin}
-              />
-            ))
-          )}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {links.length === 0 ? (
+              <div className="col-span-full text-center text-gray-500">
+                No affiliate links found. Add your first link!
+              </div>
+            ) : (
+              links.map((link: AffiliateLink, idx) => (
+                <Card
+                  // key={link.id}
+                  key={`link-${idx}`} // Use index as key for simplicity in this example
+                  className="hover:shadow-xl transition-shadow duration-300 ease-in-out flex flex-col overflow-hidden rounded-lg border max-w-md w-full"
+                >
+                  <CardHeader>
+                    <CardTitle>{link.productName}</CardTitle>
+                  </CardHeader>
+                  <div className="relative w-full aspect-[16/9] overflow-hidden">
+                    <img
+                      src={link.imageUrl}
+                      alt={link.productName}
+                      width={400}
+                      height={225}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      data-ai-hint={
+                        link.aiHint ||
+                        link.productName
+                          .toLowerCase()
+                          .split(" ")
+                          .slice(0, 2)
+                          .join(" ")
+                      }
+                      onError={(e) => {
+                        (
+                          e.target as HTMLImageElement
+                        ).srcset = `https://placehold.co/400x225.png?text=${encodeURIComponent(
+                          link.productName.substring(0, 15)
+                        )}`;
+                        (
+                          e.target as HTMLImageElement
+                        ).src = `https://placehold.co/400x225.png?text=${encodeURIComponent(
+                          link.productName.substring(0, 15)
+                        )}`;
+                      }}
+                    />
+                  </div>
+                  <CardContent className="p-4 flex-grow">
+                    <CardDescription className="text-sm line-clamp-3 leading-relaxed">
+                      {link.description}
+                    </CardDescription>
+                  </CardContent>
+                  <CardFooter className="p-4 border-t bg-muted/30 flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
+                    <Button
+                      onClick={() => {
+                        window.open(
+                          link.affiliateUrl,
+                          "_blank",
+                          "noopener,noreferrer"
+                        );
+                      }}
+                      className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
+                      aria-label={`Promote ${link.productName}`}
+                    >
+                      Promote Now <ExternalLink className="ml-2 h-4 w-4" />
+                    </Button>
+                    {(isAdmin || (user && user.email === link.userId)) && (
+                      <div className="flex space-x-2 mt-2 sm:mt-0">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleEditLink(link)}
+                          aria-label={`Edit ${link.productName}`}
+                          title="Edit Link"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {isAdmin && (
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => handleDeleteLink(link.id)}
+                            aria-label={`Delete ${link.productName}`}
+                            title="Delete Link"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </CardFooter>
+                </Card>
+              ))
+            )}
+          </div>
+          {totalPages > 1 && <Pagination />}
+        </>
       )}
 
       <div id="link-management-section" className="mt-8">
@@ -358,10 +301,7 @@ export default function Home() {
             onLinkAddedOrUpdated={handleAddOrUpdateLink}
             editingLink={editingLink}
             onCancelEdit={handleCancelEdit}
-            isSubmitting={
-              addLinkMutation.status === "pending" ||
-              updateLinkMutation.status === "pending"
-            }
+            isSubmitting={false}
           />
         )}
       </div>

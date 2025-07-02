@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IAffiliateLink extends Document {
+  url: string;
   productName: string;
   description: string;
   imageUrl: string;

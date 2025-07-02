@@ -1,7 +1,12 @@
-
 "use client";
 
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
@@ -12,17 +17,20 @@ const AboutPage = () => {
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       <Card className="shadow-xl overflow-hidden">
         <div className="relative h-48 sm:h-64 w-full">
-            <Image
-                src="https://placehold.co/1200x400.png"
-                alt="AffiliateLink Hub team working"
-                fill
-                priority
-                className="object-cover"
-                data-ai-hint="team collaboration"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
-                <h1 className="text-3xl sm:text-4xl font-bold text-white">About AffiliateLink Hub</h1>
-            </div>
+          <Image
+            src="https://media.istockphoto.com/id/173737206/photo/screen-and-internet-sign-with-e-business-e-commerce.webp?a=1&b=1&s=612x612&w=0&k=20&c=_0hzQfdOCd_-EScPAD2RRF5wczmdtjmPqkWfAmDW3bM="
+            alt="AffiliateLink Hub team working"
+            width={200}
+            height={200}
+            // priority
+            className="object-cover"
+            data-ai-hint="team collaboration"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white">
+              About AffiliateLink Hub
+            </h1>
+          </div>
         </div>
         <CardContent className="p-6 space-y-8">
           <section>
@@ -30,10 +38,12 @@ const AboutPage = () => {
               <Target className="mr-3 h-7 w-7" /> Our Mission
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Our mission is to empower affiliate marketers, content creators, and online entrepreneurs
-              with intuitive and powerful tools to streamline their affiliate marketing efforts. We aim to
-              simplify link management, boost productivity through AI-driven content generation, and
-              ultimately help you maximize your passive income potential.
+              Our mission is to empower affiliate marketers, content creators,
+              and online entrepreneurs with intuitive and powerful tools to
+              streamline their affiliate marketing efforts. We aim to simplify
+              link management, boost productivity through AI-driven content
+              generation, and ultimately help you maximize your passive income
+              potential.
             </p>
           </section>
 
@@ -42,10 +52,12 @@ const AboutPage = () => {
               <Lightbulb className="mr-3 h-7 w-7" /> What We Do
             </h2>
             <p className="text-muted-foreground leading-relaxed">
-              AffiliateLink Hub provides a comprehensive platform for managing all your affiliate links in one
-              centralized dashboard. From adding and organizing links to leveraging AI for generating compelling
-              product descriptions, we provide the resources you need to succeed. Our platform is designed to be
-              user-friendly, efficient, and adaptable to your growing needs.
+              AffiliateLink Hub provides a comprehensive platform for managing
+              all your affiliate links in one centralized dashboard. From adding
+              and organizing links to leveraging AI for generating compelling
+              product descriptions, we provide the resources you need to
+              succeed. Our platform is designed to be user-friendly, efficient,
+              and adaptable to your growing needs.
             </p>
           </section>
 
@@ -69,7 +81,8 @@ const AboutPage = () => {
               <Mail className="mr-3 h-7 w-7 text-primary" /> Get In Touch
             </h2>
             <p className="text-muted-foreground mb-6">
-              Have questions, feedback, or just want to say hello? We'd love to hear from you!
+              Have questions, feedback, or just want to say hello? We'd love to
+              hear from you!
             </p>
             <Button asChild size="lg">
               <Link href="/contact">Contact Us</Link>
@@ -82,5 +95,3 @@ const AboutPage = () => {
 };
 
 export default AboutPage;
-
-    

@@ -20,11 +20,29 @@ export async function POST(req: Request) {
 }
 
 // GET all affiliate links
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectToDB();
-    const links = await AffiliateLink.find({}).sort({ createdAt: -1 });
-    return NextResponse.json(links);
+
+    // Get pagination params from query string
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+
+    const skip = (page - 1) * limit;
+
+    const [links, total] = await Promise.all([
+      AffiliateLink.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      AffiliateLink.countDocuments({}),
+    ]);
+
+    return NextResponse.json({
+      data: links,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error) {
     console.error("Error fetching affiliate links:", error);
     return NextResponse.json(
