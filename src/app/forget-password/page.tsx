@@ -1,8 +1,6 @@
 "use client";
 import React, { useState } from "react";
 
-//implement forgot password functionality
-
 export default function ForgetPasswordPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -21,14 +19,16 @@ export default function ForgetPasswordPage() {
         body: JSON.stringify({ email }),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Something went wrong");
+        setError(data.error || "Something went wrong");
+        return;
       }
 
       setSubmitted(true);
     } catch (err: any) {
-      setError(err.message);
+      setError("Server error. Please try again later.");
     } finally {
       setLoading(false);
     }

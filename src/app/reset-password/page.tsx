@@ -1,201 +1,123 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function ResetPasswordPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  // Get email from query string (e.g., /reset-password?email=someone@example.com)
-  const [email, setEmail] = useState<string | null>(null);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const emailParam = params.get("email");
-    setEmail(emailParam);
-  }, []);
+  const validatePassword = (pwd: string) => pwd.length >= 8;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setMessage("");
+    setSuccess(false);
 
-    if (!password || !confirm) {
-      setError("Please fill in all fields.");
+    if (!token) {
+      setMessage("Invalid or missing token.");
       return;
     }
+
     if (password !== confirm) {
-      setError("Passwords do not match.");
+      setMessage("Passwords do not match.");
       return;
     }
-    if (!email) {
-      setError("No user email found. Please log in.");
+
+    if (!validatePassword(password)) {
+      setMessage("Password must be at least 8 characters.");
       return;
     }
 
     setLoading(true);
+
     try {
-      const res = await fetch("/api/auth/resetPassword", {
+      const res = await fetch("/api/auth/reset-password", {
         method: "POST",
+        body: JSON.stringify({ token, password }),
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, newPassword: password }),
       });
+
       const data = await res.json();
-      if (res.ok) {
-        setMessage("Password reset successful. You can now log in.");
-      } else {
-        setError(data.error || "Failed to reset password.");
+
+      if (!res.ok) {
+        throw new Error(data.error || "An error occurred.");
       }
-    } catch (err) {
-      setError("Something went wrong.");
+
+      setSuccess(true);
+      setMessage("✅ Password reset successful. Redirecting to login...");
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 2500);
+    } catch (err: any) {
+      setMessage(err.message || "An error occurred.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%)",
-        padding: 16,
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 400,
-          background: "#fff",
-          borderRadius: 16,
-          boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
-          padding: 32,
-          boxSizing: "border-box",
-        }}
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-8 rounded-lg shadow-md w-full max-w-md space-y-4"
       >
-        <h2
-          style={{
-            textAlign: "center",
-            marginBottom: 24,
-            color: "#3730a3",
-            fontWeight: 700,
-            letterSpacing: 1,
-          }}
-        >
+        <h1 className="text-2xl font-semibold text-center text-gray-800">
           Reset Password
-        </h2>
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: 18 }}
+        </h1>
+
+        <input
+          type="password"
+          placeholder="New password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          minLength={8}
+          className="w-full border border-gray-300 px-4 py-2 rounded"
+          disabled={loading || success}
+        />
+
+        <input
+          type="password"
+          placeholder="Confirm password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          required
+          minLength={8}
+          className="w-full border border-gray-300 px-4 py-2 rounded"
+          disabled={loading || success}
+        />
+
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition disabled:opacity-60"
+          disabled={loading || success}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <label style={{ fontWeight: 500, color: "#6366f1" }}>
-              New Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{
-                padding: "10px 12px",
-                borderRadius: 8,
-                border: "1px solid #c7d2fe",
-                fontSize: 16,
-                outline: "none",
-                transition: "border 0.2s",
-              }}
-              placeholder="Enter new password"
-            />
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <label style={{ fontWeight: 500, color: "#6366f1" }}>
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              required
-              style={{
-                padding: "10px 12px",
-                borderRadius: 8,
-                border: "1px solid #c7d2fe",
-                fontSize: 16,
-                outline: "none",
-                transition: "border 0.2s",
-              }}
-              placeholder="Confirm new password"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading || !email}
-            style={{
-              marginTop: 10,
-              padding: "12px 0",
-              borderRadius: 8,
-              border: "none",
-              background: loading
-                ? "linear-gradient(90deg, #a5b4fc 0%, #818cf8 100%)"
-                : "linear-gradient(90deg, #6366f1 0%, #3730a3 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              fontSize: 16,
-              cursor: loading ? "not-allowed" : "pointer",
-              boxShadow: "0 2px 8px rgba(99,102,241,0.08)",
-              transition: "background 0.2s, box-shadow 0.2s",
-            }}
+          {loading ? "Resetting..." : "Reset Password"}
+        </button>
+
+        {message && (
+          <p
+            className={`text-center text-sm mt-2 ${
+              success ? "text-green-600" : "text-red-500"
+            }`}
           >
-            {loading ? "Resetting..." : "Reset Password"}
-          </button>
-          {error && (
-            <div
-              style={{
-                color: "#dc2626",
-                background: "#fef2f2",
-                borderRadius: 6,
-                padding: "8px 12px",
-                marginTop: 6,
-                fontSize: 15,
-                textAlign: "center",
-              }}
-            >
-              {error}
-            </div>
-          )}
-          {message && (
-            <div
-              style={{
-                color: "#16a34a",
-                background: "#f0fdf4",
-                borderRadius: 6,
-                padding: "8px 12px",
-                marginTop: 6,
-                fontSize: 15,
-                textAlign: "center",
-              }}
-            >
-              {message}
-            </div>
-          )}
-        </form>
-      </div>
-      <style>{`
-                                @media (max-width: 500px) {
-                                        div[style*="max-width: 400px"] {
-                                                padding: 18px !important;
-                                                border-radius: 8px !important;
-                                        }
-                                        h2 {
-                                                font-size: 1.3rem !important;
-                                        }
-                                }
-                        `}</style>
+            {message}
+          </p>
+        )}
+
+        <div className="text-xs text-gray-500 text-center">
+          Password must be at least 8 characters.
+        </div>
+      </form>
     </div>
   );
 }

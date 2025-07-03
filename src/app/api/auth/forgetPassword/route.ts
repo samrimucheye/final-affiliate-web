@@ -1,58 +1,52 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import User from "@/models/User";
-import nodemailer from "nodemailer";
+import crypto from "crypto";
 import { connectToDB } from "@/lib/db";
+import { sendResetEmail } from "@/lib/email";
 
-//forget password route
+// Optional: enable dynamic rendering in Vercel (for DB-based routes)
+export const dynamic = "force-dynamic";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   await connectToDB();
+  try {
+    const { email } = await req.json();
 
-  const { email } = await req.json();
+    if (!email || typeof email !== "string") {
+      return NextResponse.json(
+        { error: "A valid email is required." },
+        { status: 400 }
+      );
+    }
 
-  if (!email) {
-    return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      console.warn("Password reset requested for non-existent email:", email);
+      // Don't reveal if user exists — send same response for security
+      return NextResponse.json({
+        message: "If an account exists, a reset link was sent.",
+      });
+    }
+
+    // Create reset token
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 1000 * 60 * 60); // 1 hour from now
+
+    user.resetToken = token;
+    user.resetTokenExpires = expires;
+    await user.save();
+
+    await sendResetEmail(email, token);
+
+    return NextResponse.json({
+      message: "If an account exists, a reset link was sent.",
+    });
+  } catch (err: any) {
+    console.error("Reset password request failed:", err);
+    return NextResponse.json(
+      { error: "Server error. Please try again later." },
+      { status: 500 }
+    );
   }
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
-
-  // Generate reset token and expiry
-  const resetToken = Math.random().toString(36).substring(2);
-  const resetTokenExpiry = Date.now() + 1000 * 60 * 60; // 1 hour
-
-  user.resetPasswordToken = resetToken;
-  user.resetPasswordExpires = resetTokenExpiry;
-  await user.save();
-
-  // Check for email
-  if (!email) {
-    throw new Error("Missing email in request.");
-  }
-
-  // Send email
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    host: process.env.EMAIL_SERVER_HOST,
-    port: Number(process.env.EMAIL_SERVER_PORT) || 587,
-
-    auth: {
-      user: process.env.EMAIL_SERVER_USER,
-      pass: process.env.EMAIL_SERVER_PASSWORD,
-    },
-  });
-
-  const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}`;
-
-  await transporter.sendMail({
-    to: user.email,
-    subject: "Password Reset",
-    html: `<p>You requested a password reset.</p>
-                     <p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`,
-  });
-
-  return NextResponse.json({ message: "Password reset email sent" });
 }

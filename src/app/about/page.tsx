@@ -20,11 +20,11 @@ const AboutPage = () => {
           <Image
             src="https://media.istockphoto.com/id/173737206/photo/screen-and-internet-sign-with-e-business-e-commerce.webp?a=1&b=1&s=612x612&w=0&k=20&c=_0hzQfdOCd_-EScPAD2RRF5wczmdtjmPqkWfAmDW3bM="
             alt="AffiliateLink Hub team working"
-            width={200}
-            height={200}
-            // priority
-            className="object-cover"
+            fill
+            priority
+            className="object-cover w-full h-full"
             data-ai-hint="team collaboration"
+            sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
             <h1 className="text-3xl sm:text-4xl font-bold text-white">
