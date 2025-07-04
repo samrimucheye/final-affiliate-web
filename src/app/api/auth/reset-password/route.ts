@@ -3,55 +3,34 @@ import bcrypt from "bcryptjs";
 import User from "@/models/User";
 import { connectToDB } from "@/lib/db";
 
-export const dynamic = "force-dynamic"; // Optional for Vercel/Edge
+interface RequestBody {
+  token: string;
+  password: string;
+}
 
-export async function POST(req: Request) {
+export async function POST(req: Request): Promise<NextResponse> {
   try {
-    const { token, password } = await req.json();
-
-    if (!token || !password) {
-      return NextResponse.json(
-        { error: "Token and valid password are required." },
-        { status: 400 }
-      );
-    }
-
     await connectToDB();
+    const { token, password }: RequestBody = await req.json();
 
-    const user = (await User.findOne({
-      resetToken: token,
-      resetTokenExpires: { $gt: new Date() },
-    })) as
-      | (typeof User.prototype & {
-          password?: string;
-          resetToken?: string | null;
-          resetTokenExpires?: Date | null;
-          save?: () => Promise<void>;
-        })
-      | null;
+    // Find user by reset token
+    const user = await User.findOne({ resetToken: token });
 
-    if (!user || typeof user !== "object" || !("save" in user)) {
+    if (!user) {
       return NextResponse.json(
-        { error: "Invalid or expired reset token." },
+        { message: "Invalid or expired token" },
         { status: 400 }
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
     user.password = hashedPassword;
-    user.resetToken = null;
-    user.resetTokenExpires = null;
-
+    user.resetToken = undefined; // Remove token after reset
     await user.save();
 
-    return NextResponse.json({
-      message: "Password has been reset successfully.",
-    });
+    return NextResponse.json({ message: "Password updated successfully!" });
   } catch (error) {
-    console.error("Password reset error:", error);
-    return NextResponse.json(
-      { error: "Something went wrong on the server." },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
